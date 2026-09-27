@@ -60,7 +60,7 @@ processes need access to the same bucket and compatible settings.
 
 ### Live vs. Near-Live Comparison
 
-<video controls src="media/Screen Recording 2026-09-26 at 10.49.18.mov" title="Live vs Near Live"></video>
+https://github.com/user-attachments/assets/edb8f956-d2fb-4853-b262-6376ce1dfda1
 
 ## Architecture
 
