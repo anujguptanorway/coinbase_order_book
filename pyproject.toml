@@ -1,0 +1,30 @@
+[project]
+name = "marketdata"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Anuj kumar Gupta", email = "anuj.kumar.gupta@telenor.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "minio>=7.2.20",
+    "numpy>=2.0",
+    "python-dotenv>=1.2.3",
+    "rich>=15.0.0",
+    "sortedcontainers>=2.4.0",
+    "websockets>=17.1",
+]
+
+[project.scripts]
+marketdata = "marketdata:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.16.9",
+]
