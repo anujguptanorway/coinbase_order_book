@@ -20,7 +20,7 @@ from .bronze.feed import CoinbaseFeed
 from .pipeline import Pipeline
 from .silver.normalize import parse_message
 
-PRINT_INTERVAL_SECONDS = 5
+PRINT_INTERVAL_SECONDS = 4
 CONSUMER_POLL_SECONDS = 4
 CONSUMER_OBJECT_BATCH_SIZE = 8
 
