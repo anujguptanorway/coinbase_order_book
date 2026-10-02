@@ -105,7 +105,7 @@ containing the message.
 | `silver.normalized_order_{product}` | One normalized price-level change | `side`, `price`, `size`<br>`timestamp`, `type`<br>`eh_sequence_number` |
 | `silver.order_book_{product}` | One current price level per product/side/price | `side`, `price`, `quantity` |
 | `gold.insight_book_{product}` | One metric observation per processed event | `eh_sequence_number`, `timestamp`<br>`best_bid`, `best_bid_quantity`<br>`best_ask`, `best_ask_quantity`<br>`spread`, `highest_spread`, `mid_price` |
-| `gold.forecast_eval_{product}` | One 60-second-ahead forecast per forecast origin | `eh_sequence_number`, `forecast_timestamp`, `target_timestamp`<br>`forecast_price`, `evaluation_timestamp`, `observed_mid_price`, `absolute_error` |
+| `gold.forecast_eval_{product}` | One 60-second-ahead forecast per forecast origin | `eh_sequence_number`, `forecast_timestamp`, `target_timestamp`<br>`forecast_price_60sec`, `evaluation_timestamp`, `observed_mid_price`, `absolute_error` |
 | `gold.rolling_metrics_{product}` | One rolling-metric record per metric observation | `eh_sequence_number`, `timestamp`<br>`avg_mid_price_1m`, `avg_mid_price_5min`, `avg_mid_price_15min`<br>`forecast_error_1m`, `forecast_error_5min`, `forecast_error_15min` |
 
 `gold.insight_book_{product}` stores observations, not rolling-window
