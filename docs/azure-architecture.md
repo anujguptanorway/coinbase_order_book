@@ -63,15 +63,19 @@ schedule. The five-second refresh requirement from Part 1 does not apply here.
   Emit one observation per complete feed message, not one per normalized
   price-level row, to avoid intermediate and inconsistent book snapshots.
 6. For each forecast origin, the forecasting process writes one row to
-  `gold.forecast_eval_{product}` with 1-, 5-, and 15-minute forecasts and the
-  time-weighted rolling mid-price averages available at that origin. When
-  valid observations arrive at or after each horizon target, it calculates
-  the absolute forecast error and updates the corresponding error field and
-  `evaluation_timestamp`. Errors for horizons not yet reached remain null.
+  `gold.forecast_eval_{product}` with one 60-second-ahead prediction and its
+  target timestamp. At the first valid observation at or after the target,
+  it records the observed mid-price, absolute forecast error, and evaluation
+  timestamp. Evaluation fields remain null until the forecast is scored.
+  For each metric observation, it also writes
+  `gold.rolling_metrics_{product}` with time-weighted rolling mid-price
+  averages and mean absolute forecast errors over trailing 1-, 5-, and
+  15-minute windows.
 7. Power BI or another consumer queries the Gold tables through Databricks SQL.
   It can show current observations from `gold.insight_book_{product}` and
-  forecasts, averages, and evaluated errors from
-  `gold.forecast_eval_{product}`. Serving can be scheduled or batched.
+  individual predictions and evaluated errors from
+  `gold.forecast_eval_{product}`, plus rolling averages and forecast accuracy
+  from `gold.rolling_metrics_{product}`. Serving can be scheduled or batched.
 
 A Bronze envelope can look like:
 
@@ -101,16 +105,30 @@ containing the message.
 | `silver.normalized_order_{product}` | One normalized price-level change | `side`, `price`, `size`<br>`timestamp`, `type`<br>`eh_sequence_number` |
 | `silver.order_book_{product}` | One current price level per product/side/price | `side`, `price`, `quantity` |
 | `gold.insight_book_{product}` | One metric observation per processed event | `eh_sequence_number`, `timestamp`<br>`best_bid`, `best_bid_quantity`<br>`best_ask`, `best_ask_quantity`<br>`spread`, `highest_spread`, `mid_price` |
-| `gold.forecast_eval_{product}` | One forecast record per forecast origin | `eh_sequence_number`, `forecast_timestamp`, `evaluation_timestamp`<br>`forecast_price_1m`, `forecast_price_5min`, `forecast_price_15min`<br>`avg_mid_price_1m`, `avg_mid_price_5min`, `avg_mid_price_15min`<br>`forecast_error_1m`, `forecast_error_5min`, `forecast_error_15min` |
+| `gold.forecast_eval_{product}` | One 60-second-ahead forecast per forecast origin | `eh_sequence_number`, `forecast_timestamp`, `target_timestamp`<br>`forecast_price`, `evaluation_timestamp`, `observed_mid_price`, `absolute_error` |
+| `gold.rolling_metrics_{product}` | One rolling-metric record per metric observation | `eh_sequence_number`, `timestamp`<br>`avg_mid_price_1m`, `avg_mid_price_5min`, `avg_mid_price_15min`<br>`forecast_error_1m`, `forecast_error_5min`, `forecast_error_15min` |
 
 `gold.insight_book_{product}` stores observations, not rolling-window
-averages. Each row in `gold.forecast_eval_{product}` stores the three
-predictions and rolling mid-price averages as of `forecast_timestamp`.
+averages. Each row in `gold.forecast_eval_{product}` stores one prediction
+made at `forecast_timestamp` for `target_timestamp = forecast_timestamp +
+60 seconds`.
 
-Evaluate each horizon at the first valid observed mid-price at or after its
-target time. Populate that horizon's forecast error when evaluated; leave
-unevaluated errors null. `evaluation_timestamp` records when the most recently
-evaluated horizon was scored and advances as later horizons become due.
+Evaluate the forecast at the first valid observed mid-price at or after its
+target time. Set `evaluation_timestamp` to that observation's timestamp and
+`absolute_error` to `abs(forecast_price - observed_mid_price)`. Leave
+`evaluation_timestamp`, `observed_mid_price`, and `absolute_error` null while
+the forecast is pending. If observations are delayed, evaluation can occur
+later than the target; retain both timestamps to make that delay visible.
+
+`gold.rolling_metrics_{product}` stores metrics as of `timestamp`. The
+mid-price averages are time-weighted over their respective trailing windows.
+Each `forecast_mae_*` is the arithmetic mean of absolute errors whose
+`evaluation_timestamp` falls within that trailing window. All predictions
+being scored have the same 60-second horizon: the 1-, 5-, and 15-minute labels
+describe evaluation-history windows, not additional forecast horizons.
+Pending forecasts do not contribute. A window with no evaluated forecasts
+has a null MAE; during startup, use available errors without waiting for a
+full window of history.
 
 Assume each Coinbase snapshot contains the product's complete, non-empty
 bid/ask book. Updates contain changed levels; size zero removes a price level.
@@ -136,7 +154,8 @@ checkpoint containing each product's book and metric state, plus the last
 committed `eh_sequence_number` per Event Hubs partition. Commit state and
 progress together so replay neither skips accepted broker records nor applies
 the same record twice. Preserve recent valid mid-price samples, pending
-forecasts, and highest-spread state.
+forecasts, evaluated errors from the trailing 15 minutes, and highest-spread
+state.
 
 ## Azure Services
 
