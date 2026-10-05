@@ -74,6 +74,8 @@ runs the same processing path from the bucket.
 See the [design notes](docs/design.md) for metric definitions, modelling
 choices, and limitations. The [Azure architecture](docs/azure-architecture.md)
 describes a proposed cloud deployment and its reliability model.
+The [data warehouse design](docs/data-warehouse.md) describes a proposed
+dimensional analytics model for BI and downstream consumers.
 
 ### Archive behavior and limits
 
