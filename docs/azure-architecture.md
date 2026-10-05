@@ -1,4 +1,4 @@
-# Part 2: Azure Data Architecture
+# Part 2: Azure Data Architecture (Lakehouse processing flow)
 
 ## Introduction
 
@@ -11,9 +11,14 @@ Power BI, Databricks SQL, or an application.
 Ingestion and downstream processing are continuous; serving can run on a
 schedule. The five-second refresh requirement from Part 1 does not apply here.
 
-## Architecture Overview
+## Architecture Overview ( Highly efficient per product processing infra - Live )
+### Useful when there is diffrent forecasting logic for each product - (timestamp & eh_squence_number will determine the row)
 
 ![Azure market-data architecture](../media/azure_arch.jpg)
+
+## Datawarehouse Focussed Model Overview ( Centralized infra - Live )
+
+![Azure market-data architecture](../media/Data_model.jpg)
 
 ## Components
 
@@ -97,7 +102,7 @@ The Coinbase payload stays unchanged inside `payload`. The envelope's
 connector receives the message. `file_name` identifies the ADLS Capture file
 containing the message.
 
-## Data Models
+## Data Models per product processing infra 
 
 | Layer/table | Grain and key | Main fields |
 | --- | --- | --- |
